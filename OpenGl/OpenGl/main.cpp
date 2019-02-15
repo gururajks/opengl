@@ -2,31 +2,18 @@
 #include <glfw3.h>
 
 #include <iostream>
+#include "ShaderReader.h"
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 int SCR_WIDTH = 600;
 int SCR_HEIGHT = 800;
 
-const char *vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n\0";
 
-const char *secondFragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(0.5f, 0.3f, 0.2f, 1.0f);\n"
-"}\n\0";
 
 int main()
 {
@@ -58,19 +45,29 @@ int main()
     }
 
     float vertices[] = {
-        -0.9f, 0.5f, 0.0f,
-        -0.5f, 0.0, 0.0f,
-        -0.9f, -0.5f, 0.0f
+        -0.4f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -0.6f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -0.2f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
     };
 
     float secondVertices[] = {
         0.9f, 0.5f, 0.0f,
         0.5f, 0.0, 0.0f,
         0.9f, -0.5f, 0.0f
-    };
+    };    
 
-    
-    
+	ShaderReader vSRead;
+	vSRead.readFile("D:/opengl/OpenGl/OpenGl/vertexshader.glsl");
+	const char* vertexShaderSource = vSRead.getShaderSource();
+
+	ShaderReader fSRead;
+	fSRead.readFile("D:/opengl/OpenGl/OpenGl/fragshader.glsl");
+	const char* fragmentShaderSource = fSRead.getShaderSource();
+
+	ShaderReader fSRead2;
+	fSRead2.readFile("D:/opengl/OpenGl/OpenGl/secondfragshader.glsl");
+	const char* secondFragmentShaderSource = fSRead2.getShaderSource();
+	    
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
@@ -147,8 +144,10 @@ int main()
     glBindVertexArray(VAO[0]);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);    
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3* sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(VAO[1]);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
@@ -159,6 +158,15 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
+	glm::mat4 transformMat = glm::mat4(	1.0f, 0.0f, 0.0f, 0.0f,
+										0.0f, 1.0f, 0.0f, 0.0f, 
+										0.0f, 0.0f, 1.0f, 0.0f, 
+										0.0f, 0.0f, 0.0f, 1.0f) ;
+	
+	transformMat = glm::scale(transformMat, glm::vec3(0.5f, 1.0f, 0.0f));
+	
+		
+
     // render loop
     // swap buffers to render images
     while (!glfwWindowShouldClose(window))
@@ -168,12 +176,24 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+		float currentTime = glfwGetTime();
 
         glUseProgram(shaderProgram);
+		unsigned int f1transformLoc = glGetUniformLocation(secondShaderProgram, "transform");
+		//transformMat = glm::rotate(transformMat, glm::radians(currentTime), glm::vec3(0.0f, 0.0f, 1.0f));
+		transformMat = glm::scale(transformMat, glm::vec3(sin(currentTime) * 10.0f, sin(currentTime) * 10.0f, 0.0f));
+		glUniformMatrix4fv(f1transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
+
         glBindVertexArray(VAO[0]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        glUseProgram(secondShaderProgram);
-        glBindVertexArray(VAO[1]);
+		glUseProgram(secondShaderProgram);		
+
+		unsigned int transformLoc = glGetUniformLocation(secondShaderProgram, "transform");
+		//transformMat = glm::rotate(transformMat, glm::radians(currentTime), glm::vec3(0.0f, 0.0f, 1.0f));
+		//transformMat = glm::scale(transformMat, glm::vec3(sin(currentTime) * 10.0f, sin(currentTime) * 10.0f, 0.0f));
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
+
+		glBindVertexArray(VAO[1]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
