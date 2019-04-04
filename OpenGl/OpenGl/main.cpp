@@ -14,7 +14,6 @@ int SCR_WIDTH = 600;
 int SCR_HEIGHT = 800;
 
 
-
 int main()
 {
     // glfw: initialize and configure
@@ -57,15 +56,15 @@ int main()
     };    
 
 	ShaderReader vSRead;
-	vSRead.readFile("D:/opengl/OpenGl/OpenGl/vertexshader.glsl");
+	vSRead.readFile("D:\\opengl\\OpenGl\\OpenGl\\vertexshader.glsl");
 	const char* vertexShaderSource = vSRead.getShaderSource();
 
 	ShaderReader fSRead;
-	fSRead.readFile("D:/opengl/OpenGl/OpenGl/fragshader.glsl");
+	fSRead.readFile("D:\\opengl\\OpenGl\\OpenGl\\fragshader.glsl");
 	const char* fragmentShaderSource = fSRead.getShaderSource();
 
 	ShaderReader fSRead2;
-	fSRead2.readFile("D:/opengl/OpenGl/OpenGl/secondfragshader.glsl");
+	fSRead2.readFile("D:\\opengl\\OpenGl\\OpenGl\\secondfragshader.glsl");
 	const char* secondFragmentShaderSource = fSRead2.getShaderSource();
 	    
     unsigned int vertexShader;
@@ -181,7 +180,7 @@ int main()
         glUseProgram(shaderProgram);
 		unsigned int f1transformLoc = glGetUniformLocation(secondShaderProgram, "transform");
 		//transformMat = glm::rotate(transformMat, glm::radians(currentTime), glm::vec3(0.0f, 0.0f, 1.0f));
-		transformMat = glm::scale(transformMat, glm::vec3(sin(currentTime) * 10.0f, sin(currentTime) * 10.0f, 0.0f));
+		//transformMat = glm::scale(transformMat, glm::vec3(sin(currentTime) * 10.0f, sin(currentTime) * 10.0f, 0.0f));
 		glUniformMatrix4fv(f1transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
 
         glBindVertexArray(VAO[0]);
