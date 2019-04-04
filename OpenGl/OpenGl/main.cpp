@@ -56,15 +56,15 @@ int main()
     };    
 
 	ShaderReader vSRead;
-	vSRead.readFile("D:\\opengl\\OpenGl\\OpenGl\\vertexshader.glsl");
+	vSRead.readFile("E:\\opengl\\OpenGl\\OpenGl\\vertexshader.glsl");
 	const char* vertexShaderSource = vSRead.getShaderSource();
 
 	ShaderReader fSRead;
-	fSRead.readFile("D:\\opengl\\OpenGl\\OpenGl\\fragshader.glsl");
+	fSRead.readFile("E:\\opengl\\OpenGl\\OpenGl\\fragshader.glsl");
 	const char* fragmentShaderSource = fSRead.getShaderSource();
 
 	ShaderReader fSRead2;
-	fSRead2.readFile("D:\\opengl\\OpenGl\\OpenGl\\secondfragshader.glsl");
+	fSRead2.readFile("E:\\opengl\\OpenGl\\OpenGl\\secondfragshader.glsl");
 	const char* secondFragmentShaderSource = fSRead2.getShaderSource();
 	    
     unsigned int vertexShader;
