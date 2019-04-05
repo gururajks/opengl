@@ -9,7 +9,7 @@
 
 #include<filesystem>
 #include "stb_image.h"
-
+#include "Constants.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -92,7 +92,7 @@ int main()
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-
+	glEnable(GL_DEPTH_TEST);
     //link the shader program
     unsigned int shaderProgram;
     shaderProgram = glCreateProgram();
@@ -110,21 +110,19 @@ int main()
 
     unsigned int VAO[2];
     unsigned int VBO[2];
-	unsigned int EBO[2];
+	//	unsigned int EBO[2];
     glGenVertexArrays(2, VAO);
     glGenBuffers(2, VBO);
-	glGenBuffers(2, EBO);
+	//glGenBuffers(2, EBO);
     glBindVertexArray(VAO[0]);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3* sizeof(float)));
-    glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(graphics::cubeVertices), graphics::cubeVertices, GL_STATIC_DRAW);
+	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);*/
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);	
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
     
 	//textures
 	unsigned int texture1;
@@ -177,14 +175,11 @@ int main()
 										0.0f, 0.0f, 1.0f, 0.0f, 
 										0.0f, 0.0f, 0.0f, 1.0f) ;
 	
-	transformMat = glm::scale(transformMat, glm::vec3(1.0f, 1.5f, 1.0f));
+	transformMat = glm::scale(transformMat, glm::vec3(0.5f, 0.5f, 0.5f));
 	glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
 	//glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
 	
-	glm::mat4 model = glm::mat4(1);
-	glm::mat4 view = glm::mat4(1);
-	glm::mat4 proj = glm::mat4(1);
-
+	
 
     // render loop
     // swap buffers to render images
@@ -194,19 +189,37 @@ int main()
 
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		float currentTime = glfwGetTime();
 
-        
+		
+		
 		unsigned int f1transformLoc = glGetUniformLocation(shaderProgram, "transform");
 		glUniformMatrix4fv(f1transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
+		glm::mat4 model = glm::mat4(1);
+		glm::mat4 view = glm::mat4(1);
+		glm::mat4 proj = glm::mat4(1);
+		proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 		
-		/*glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture2);*/
-        glBindVertexArray(VAO[0]);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		unsigned int viewtransformLoc = glGetUniformLocation(shaderProgram, "view");
+		glUniformMatrix4fv(viewtransformLoc, 1, GL_FALSE, glm::value_ptr(view));
+		unsigned int projtransformLoc = glGetUniformLocation(shaderProgram, "proj");
+		glUniformMatrix4fv(projtransformLoc, 1, GL_FALSE, glm::value_ptr(proj));
+		
+		glBindVertexArray(VAO[0]);
+
+		 
+		for (int i = 0; i < 10; i++)
+		{
+			model = glm::translate(model, graphics::cubePositions[i]);
+			model = glm::rotate(model, (float) glfwGetTime() * glm::radians(10.0f), glm::vec3(0.5f, 1.0f, 1.0f));
+			unsigned int modeltransformLoc = glGetUniformLocation(shaderProgram, "model");
+			glUniformMatrix4fv(modeltransformLoc, 1, GL_FALSE, glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		
 		glUseProgram(shaderProgram);
 
         glfwSwapBuffers(window);
@@ -215,7 +228,7 @@ int main()
 
     glDeleteVertexArrays(2, VAO);
     glDeleteBuffers(2, VBO);
-	glDeleteBuffers(2, EBO);
+	//glDeleteBuffers(2, EBO);
     glfwTerminate();
     return 0;
 }
