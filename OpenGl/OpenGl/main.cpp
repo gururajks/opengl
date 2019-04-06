@@ -13,9 +13,22 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
 int SCR_WIDTH = 600;
 int SCR_HEIGHT = 800;
+float lastX = SCR_WIDTH / 2;
+float lastY = SCR_HEIGHT / 2;
+float yaw = -90.0f;	
+float pitch = 0.0f;
+float fov = 45.0f;
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+bool firstMouse = true;
 
 int main()
 {
@@ -37,7 +50,11 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -186,22 +203,23 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
-
+		
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		float currentTime = glfwGetTime();
-
-		
-		
+				
 		unsigned int f1transformLoc = glGetUniformLocation(shaderProgram, "transform");
 		glUniformMatrix4fv(f1transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
 		glm::mat4 model = glm::mat4(1);
 		glm::mat4 view = glm::mat4(1);
 		glm::mat4 proj = glm::mat4(1);
-		proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		proj = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
 		
+		float radius = 10.0f;
+		float camX = sin(glfwGetTime()) * radius;
+		float camZ = cos(glfwGetTime()) * radius;
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, up);
+
 		unsigned int viewtransformLoc = glGetUniformLocation(shaderProgram, "view");
 		glUniformMatrix4fv(viewtransformLoc, 1, GL_FALSE, glm::value_ptr(view));
 		unsigned int projtransformLoc = glGetUniformLocation(shaderProgram, "proj");
@@ -237,8 +255,70 @@ int main()
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
+	float cameraSpeed = 0.05f;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		cameraPos += cameraFront * cameraSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		cameraPos -= cameraFront * cameraSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		cameraPos -= glm::normalize(glm::cross(cameraFront, up)) * cameraSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		cameraPos += glm::normalize(glm::cross(cameraFront, up)) * cameraSpeed;
+	}
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+	
+	float xOffset = xpos - lastX;
+	float yOffset = lastY - ypos;
+
+	lastX = xpos;
+	lastY = ypos;
+
+	float sensitivity = 0.05f;
+	xOffset *= sensitivity;
+	yOffset *= sensitivity;
+
+	yaw += xOffset;
+	pitch += yOffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.y = sin(glm::radians(pitch));
+	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(front);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	if (fov >= 1.0f && fov <= 45.0f)
+		fov -= yoffset;
+	if (fov <= 1.0f)
+		fov = 1.0f;
+	if (fov >= 45.0f)
+		fov = 45.0f;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
