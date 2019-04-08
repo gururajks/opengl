@@ -3,11 +3,13 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <glad/glad.h>
+#include <glfw3.h>
 
-class ShaderReader
+class BaseShader
 {
 public:
-	ShaderReader() : m_shaderSource("") {}
+	BaseShader() : m_shaderSource("") {}
 
 	const char* getShaderSource()
 	{
@@ -31,9 +33,9 @@ public:
 		m_shaderSource += "\0";
 	}
 
+	virtual unsigned int createShaderProgram() = 0;
 
-
-private:
+protected:
 	std::string		m_shaderSource;
 
 
