@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="CubeVertexBuffer.h" />
     <ClInclude Include="FragmentShader.h" />
     <ClInclude Include="BaseShader.h" />
     <ClInclude Include="Shader.h" />

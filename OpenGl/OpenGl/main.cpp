@@ -11,6 +11,8 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Constants.h"
+#include "Camera.h"
+#include "CubeVertexBuffer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -28,6 +30,7 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+Camera camera(cameraPos, target, up);
 
 bool firstMouse = true;
 
@@ -65,30 +68,16 @@ int main()
     }
 
 
-	unique_ptr<Shader> sf = make_unique<Shader>("vertexshader.glsl", "fragshader.glsl");
-	unsigned int shaderProgram = sf->linkShader();
+	unique_ptr<Shader> shader = make_unique<Shader>("vertexshader.glsl", "plainfragshader.glsl");
+	unsigned int shaderProgram = shader->linkShader();
 	
 	glEnable(GL_DEPTH_TEST);
-    //link the shader program
     
 
-    unsigned int VAO[2];
-    unsigned int VBO[2];
-    glGenVertexArrays(2, VAO);
-    glGenBuffers(2, VBO);
-    glBindVertexArray(VAO[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(graphics::cubeVertices), graphics::cubeVertices, GL_STATIC_DRAW);
-	
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);	
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-    
-	
-	//initialize the texture class
-	Texture texture;
-	
+	unsigned int VAO[2];
+	unsigned int VBO[2];
+	CubeVertexBuffer cvb(VAO, VBO);
+		
 
 	glm::mat4 transformMat = glm::mat4(	1.0f, 0.0f, 0.0f, 0.0f,
 										0.0f, 1.0f, 0.0f, 0.0f, 
@@ -109,7 +98,7 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				
-		
+		shader->setShaderUniform("transform", transformMat);
 		glm::mat4 model = glm::mat4(1);
 		glm::mat4 view = glm::mat4(1);
 		glm::mat4 proj = glm::mat4(1);
@@ -118,24 +107,20 @@ int main()
 		float radius = 10.0f;
 		float camX = sin(glfwGetTime()) * radius;
 		float camZ = cos(glfwGetTime()) * radius;
+		//view = camera.viewMatrix();
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, up);
 
-		unsigned int viewtransformLoc = glGetUniformLocation(shaderProgram, "view");
-		glUniformMatrix4fv(viewtransformLoc, 1, GL_FALSE, glm::value_ptr(view));
-		unsigned int projtransformLoc = glGetUniformLocation(shaderProgram, "proj");
-		glUniformMatrix4fv(projtransformLoc, 1, GL_FALSE, glm::value_ptr(proj));
-		
+		shader->setShaderUniform("view", view);
+		shader->setShaderUniform("proj", proj);
 		glBindVertexArray(VAO[0]);
 
-		 
-		for (int i = 0; i <2; i++)
-		{
-			model = glm::translate(model, graphics::cubePositions[i]);
-			model = glm::rotate(model, (float) glfwGetTime() * glm::radians(10.0f), glm::vec3(0.5f, 1.0f, 1.0f));
-			unsigned int modeltransformLoc = glGetUniformLocation(shaderProgram, "model");
-			glUniformMatrix4fv(modeltransformLoc, 1, GL_FALSE, glm::value_ptr(model));
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
+		
+		
+		model = glm::translate(model, graphics::cubePositions[0]);
+		model = glm::rotate(model, (float) glfwGetTime() * glm::radians(10.0f), glm::vec3(0.5f, 1.0f, 1.0f));
+		shader->setShaderUniform("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		
 
 		
 		glUseProgram(shaderProgram);
