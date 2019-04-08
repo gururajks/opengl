@@ -1,6 +1,7 @@
 #pragma once
 #include "VertexShader.h"
 #include "FragmentShader.h"
+#include "GeometryShader.h"
 #include<memory>
 #include<set>
 
@@ -11,7 +12,7 @@ class Shader
 	set<unsigned int> registerShader;
 	unsigned int shaderProgram;
 public:
-	Shader(const char* vertexShaderFile, const char* fragmentShaderFile)
+	Shader(const char* vertexShaderFile, const char* fragmentShaderFile, const char* geomeotryShaderFile)
 	{
 		unique_ptr<BaseShader> vertexShaderPtr = make_unique<VertexShader>();
 		vertexShaderPtr->readFile(vertexShaderFile);
@@ -22,6 +23,11 @@ public:
 		fragShaderPtr->readFile(fragmentShaderFile);
 		unsigned int fragmentShader = fragShaderPtr->createShaderProgram();
 		registerShader.insert(fragmentShader);
+
+		unique_ptr<BaseShader> geometryShaderPtr = make_unique<GeometryShader>();
+		geometryShaderPtr->readFile(geomeotryShaderFile);
+		unsigned int geometryShader = geometryShaderPtr->createShaderProgram();
+		registerShader.insert(geometryShader);
 	}
 
 	unsigned int linkShader()

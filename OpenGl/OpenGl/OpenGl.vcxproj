@@ -139,6 +139,7 @@
     <ClInclude Include="CubeVertexBuffer.h" />
     <ClInclude Include="FragmentShader.h" />
     <ClInclude Include="BaseShader.h" />
+    <ClInclude Include="GeometryShader.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VertexShader.h" />

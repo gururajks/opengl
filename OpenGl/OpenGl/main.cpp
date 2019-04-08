@@ -58,7 +58,6 @@ int main()
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -68,24 +67,24 @@ int main()
     }
 
 
-	unique_ptr<Shader> shader = make_unique<Shader>("vertexshader.glsl", "plainfragshader.glsl");
+	unique_ptr<Shader> shader = make_unique<Shader>("pointvertexshader.glsl", "plainfragshader.glsl", "geometryshader.glsl");
 	unsigned int shaderProgram = shader->linkShader();
 	
 	glEnable(GL_DEPTH_TEST);
     
 
-	unsigned int VAO[2];
-	unsigned int VBO[2];
-	CubeVertexBuffer cvb(VAO, VBO);
-		
-
-	glm::mat4 transformMat = glm::mat4(	1.0f, 0.0f, 0.0f, 0.0f,
-										0.0f, 1.0f, 0.0f, 0.0f, 
-										0.0f, 0.0f, 1.0f, 0.0f, 
-										0.0f, 0.0f, 0.0f, 1.0f) ;
-	
-	transformMat = glm::scale(transformMat, glm::vec3(0.5f, 0.5f, 0.5f));
-	
+	unsigned int VAO;
+	unsigned int VBO;
+	float points[] = {
+		0.0f, 0.0f
+	};
+	glGenBuffers(1, &VBO);
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points, GL_STATIC_DRAW);	
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+	glEnableVertexAttribArray(0);
 	
 
     // render loop
@@ -98,28 +97,10 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				
-		shader->setShaderUniform("transform", transformMat);
-		glm::mat4 model = glm::mat4(1);
-		glm::mat4 view = glm::mat4(1);
-		glm::mat4 proj = glm::mat4(1);
-		proj = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		
-		float radius = 10.0f;
-		float camX = sin(glfwGetTime()) * radius;
-		float camZ = cos(glfwGetTime()) * radius;
-		//view = camera.viewMatrix();
-		view = glm::lookAt(cameraPos, cameraPos + cameraFront, up);
-
-		shader->setShaderUniform("view", view);
-		shader->setShaderUniform("proj", proj);
-		glBindVertexArray(VAO[0]);
-
-		
-		
-		model = glm::translate(model, graphics::cubePositions[0]);
-		model = glm::rotate(model, (float) glfwGetTime() * glm::radians(10.0f), glm::vec3(0.5f, 1.0f, 1.0f));
-		shader->setShaderUniform("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(VAO);
+				
+		glDrawArrays(GL_POINTS, 0, 4);
 		
 
 		
@@ -129,8 +110,8 @@ int main()
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(2, VAO);
-    glDeleteBuffers(2, VBO);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
 	//glDeleteBuffers(2, EBO);
     glfwTerminate();
     return 0;
