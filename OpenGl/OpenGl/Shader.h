@@ -56,4 +56,10 @@ public:
 	}
 
 
+	void setShaderUniform(std::string key, glm::vec3 tVec)
+	{
+		unsigned int f1transformLoc = glGetUniformLocation(shaderProgram, key.c_str());
+		glUniform3fv(f1transformLoc, 1, glm::value_ptr(tVec) );
+	}
+
 };

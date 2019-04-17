@@ -68,8 +68,11 @@ int main()
     }
 
 
-	unique_ptr<Shader> shader = make_unique<Shader>("vertexshader.glsl", "plainfragshader.glsl");
+	unique_ptr<Shader> shader = make_unique<Shader>("..\\shaders\\vertexshader.glsl", "..\\shaders\\plainfragshader.glsl");
 	unsigned int shaderProgram = shader->linkShader();
+
+	unique_ptr<Shader> lampShader = make_unique<Shader>("..\\shaders\\vertexshader.glsl", "..\\shaders\\lampfragshader.glsl");
+	unsigned int lampShaderProgram = lampShader->linkShader();
 	
 	glEnable(GL_DEPTH_TEST);
     
@@ -77,7 +80,19 @@ int main()
 	unsigned int VAO[2];
 	unsigned int VBO[2];
 	CubeVertexBuffer cvb(VAO, VBO);
-		
+
+	unsigned int lampVAO[2];
+	CubeVertexBuffer lampCvb(lampVAO, VBO);
+	// second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
+	//unsigned int lampVAO;
+	//glGenVertexArrays(1, &lampVAO);
+	//glBindVertexArray(lampVAO);
+
+	//// we only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need (it's already bound, but we do it again for educational purposes)
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	//glEnableVertexAttribArray(0);
 
 	glm::mat4 transformMat = glm::mat4(	1.0f, 0.0f, 0.0f, 0.0f,
 										0.0f, 1.0f, 0.0f, 0.0f, 
@@ -85,7 +100,7 @@ int main()
 										0.0f, 0.0f, 0.0f, 1.0f) ;
 	
 	transformMat = glm::scale(transformMat, glm::vec3(0.5f, 0.5f, 0.5f));
-	
+	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 	
 
     // render loop
@@ -97,33 +112,44 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				
+		glUseProgram(shaderProgram);
 		shader->setShaderUniform("transform", transformMat);
 		glm::mat4 model = glm::mat4(1);
 		glm::mat4 view = glm::mat4(1);
 		glm::mat4 proj = glm::mat4(1);
-		proj = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		proj = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);		
 		
-		float radius = 10.0f;
-		float camX = sin(glfwGetTime()) * radius;
-		float camZ = cos(glfwGetTime()) * radius;
-		//view = camera.viewMatrix();
+		view = camera.viewMatrix();
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, up);
-
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 		shader->setShaderUniform("view", view);
 		shader->setShaderUniform("proj", proj);
-		glBindVertexArray(VAO[0]);
-
 		
-		
-		model = glm::translate(model, graphics::cubePositions[0]);
-		model = glm::rotate(model, (float) glfwGetTime() * glm::radians(10.0f), glm::vec3(0.5f, 1.0f, 1.0f));
+		model = glm::translate(model, lightPos);
 		shader->setShaderUniform("model", model);
+		shader->setShaderUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+		shader->setShaderUniform("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+		shader->setShaderUniform("lightPos", lightPos);
+		glBindVertexArray(VAO[0]);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 
 		
-		glUseProgram(shaderProgram);
+		glUseProgram(lampShaderProgram);
+		lampShader->setShaderUniform("transform", transformMat);		
+		lampShader->setShaderUniform("view", view);
+		lampShader->setShaderUniform("proj", proj);
+		model = glm::mat4(1);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.5f));
+		lampShader->setShaderUniform("model", model);
+		
+		
+		glBindVertexArray(VAO[0]);
+		
+		
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+			
 
         glfwSwapBuffers(window);
         glfwPollEvents();
