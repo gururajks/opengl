@@ -125,7 +125,6 @@ int main()
 		shader->setShaderUniform("view", view);
 		shader->setShaderUniform("proj", proj);
 		
-		model = glm::translate(model, lightPos);
 		shader->setShaderUniform("model", model);
 		shader->setShaderUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
 		shader->setShaderUniform("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
